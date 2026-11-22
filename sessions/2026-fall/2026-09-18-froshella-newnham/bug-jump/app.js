@@ -1,6 +1,7 @@
-import { JumpDetector } from "./pose.js";
 import { Wheel } from "./wheel.js";
 import qrcode from "./vendor/qrcode.mjs";
+
+const keyboardOnly = new URLSearchParams(location.search).get("keyboard") === "1";
 
 // ---------- Settings (saved on this device only) ----------
 const DEFAULTS = {
@@ -40,6 +41,11 @@ const canvas = $("game");
 const ctx = canvas.getContext("2d");
 const screens = { start: $("screen-start"), over: $("screen-over"), wheel: $("screen-wheel") };
 const hud = $("hud");
+
+if (keyboardOnly) {
+  screens.start.querySelector(".lead").textContent = "Press Space, Up arrow, or tap the screen to jump. Time each jump to dodge the bugs.";
+  screens.start.querySelector(".hint").textContent = "Keyboard practice. The camera stays off for this visit.";
+}
 
 // ---------- Sound ----------
 let audio;
@@ -412,23 +418,25 @@ function setCamStatus(kind, text) {
 async function startCamera() {
   detector?.stop();
   detector = null;
+  if (keyboardOnly) { setCamStatus("off", "Press Space or tap to jump."); return; }
   if (!settings.camera) { setCamStatus("off", "Camera off. Tap to jump."); return; }
-  detector = new JumpDetector({
-    video: $("video"),
-    overlay: $("skeleton"),
-    onStatus: setCamStatus,
-    onJump: () => {
-      // Ignore jumps right after a crash so a late jump doesn't skip the result.
-      // After that, a jump starts a new round unless a spin is waiting.
-      if (game.state === "over") {
-        if (performance.now() - game.overAt > 1500 && $("btn-spin").hidden) startGame();
-        return;
-      }
-      jump();
-    },
-  });
-  detector.sensitivity = settings.sensitivity;
   try {
+    const { JumpDetector } = await import("./pose.js");
+    detector = new JumpDetector({
+      video: $("video"),
+      overlay: $("skeleton"),
+      onStatus: setCamStatus,
+      onJump: () => {
+        // Ignore jumps right after a crash so a late jump doesn't skip the result.
+        // After that, a jump starts a new round unless a spin is waiting.
+        if (game.state === "over") {
+          if (performance.now() - game.overAt > 1500 && $("btn-spin").hidden) startGame();
+          return;
+        }
+        jump();
+      },
+    });
+    detector.sensitivity = settings.sensitivity;
     await detector.start();
   } catch (err) {
     console.warn(err);
@@ -448,7 +456,8 @@ function openSettings() {
   form.prizes.value = settings.prizes;
   form.joinUrl.value = settings.joinUrl;
   form.sound.checked = settings.sound;
-  form.camera.checked = settings.camera;
+  form.camera.checked = !keyboardOnly && settings.camera;
+  form.camera.disabled = keyboardOnly;
   $("offline-status").textContent = navigator.serviceWorker?.controller
     ? "Saved for offline use on this device."
     : "Not saved for offline use yet. Open this page once with internet over https.";
@@ -470,7 +479,7 @@ dialog.addEventListener("close", () => {
     prizes: parsePrizes(form.prizes.value).length ? form.prizes.value : DEFAULTS.prizes,
     joinUrl: form.joinUrl.value || DEFAULTS.joinUrl,
     sound: form.sound.checked,
-    camera: form.camera.checked,
+    camera: keyboardOnly ? settings.camera : form.camera.checked,
   };
   store.set("gdg-jump-settings", settings);
   if (detector) detector.sensitivity = settings.sensitivity;
@@ -489,6 +498,6 @@ $("logo").addEventListener("pointerdown", () => {
 updateHud();
 
 // ---------- Offline ----------
-if ("serviceWorker" in navigator && location.protocol === "https:") {
+if (!keyboardOnly && "serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch((err) => console.warn("Offline cache failed", err));
 }
