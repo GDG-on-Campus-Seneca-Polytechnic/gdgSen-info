@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code Jam voting host</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/host.js"></script>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">GDG at Seneca · Host</p>
+    <h1 id="title">Create a Code Jam poll</h1>
+    <p id="status" role="status"></p>
+    <label for="key">Host key</label>
+    <input id="key" type="password" autocomplete="off" maxlength="64">
+    <form id="create" hidden>
+      <label for="name">Poll title</label>
+      <input id="name" placeholder="Nov 23 audience choice" required maxlength="80">
+      <button type="submit">Create poll</button>
+    </form>
+    <section id="controls" hidden>
+      <h2>Share the ballot</h2>
+      <p><a id="link">Open voter page</a></p>
+      <a id="qr-link" download="code-jam-ballot.svg"><img id="qr" width="184" height="184" alt="Download the ballot QR code"></a>
+      <p>Show attendees the QR code or share the voter page link.</p>
+      <form id="codes">
+        <label for="count">Number of attendee codes</label>
+        <input id="count" type="number" value="50" min="1" max="150" required>
+        <button type="submit">Generate codes</button>
+      </form>
+      <div id="batch" hidden>
+        <label for="code-list">Private attendee codes</label>
+        <textarea id="code-list" rows="6" readonly></textarea>
+        <button id="download" type="button">Download codes</button>
+        <p>Save this batch. Give one code to each attendee.</p>
+      </div>
+      <form id="projects">
+        <label for="entries">Project names, one per line</label>
+        <textarea id="entries" rows="6" required maxlength="4200"></textarea>
+        <button type="submit">Save projects</button>
+      </form>
+      <div class="actions">
+        <button id="open" type="button">Open voting</button>
+        <button id="close" type="button">Close and show results</button>
+      </div>
+      <p><a href="/host.html">Create a separate poll</a></p>
+    </section>
+    <p id="message" role="status"></p>
+  </main>
+</body>
+</html>

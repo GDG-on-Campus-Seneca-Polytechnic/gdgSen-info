@@ -1,0 +1,10 @@
+{
+  "name": "gdg-code-jam-vote",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./public" },
+  "durable_objects": {
+    "bindings": [{ "name": "POLLS", "class_name": "Poll" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Poll"] }]
+}
